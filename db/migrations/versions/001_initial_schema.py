@@ -7,68 +7,77 @@ Create Date: 2026-03-17
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import ENUM
 
 revision = "001"
 down_revision = None
 branch_labels = None
 depends_on = None
 
+verdict_status = ENUM("unresolved", "came_true", "came_false", name="verdict_status", create_type=False)
+job_status = ENUM("pending", "running", "done", "failed", name="job_status", create_type=False)
+
 
 def upgrade():
-    op.execute("CREATE TYPE verdict_status AS ENUM ('unresolved', 'came_true', 'came_false')")
-    op.execute("CREATE TYPE job_status AS ENUM ('pending', 'running', 'done', 'failed')")
+    op.execute("CREATE TYPE IF NOT EXISTS verdict_status AS ENUM ('unresolved', 'came_true', 'came_false')")
+    op.execute("CREATE TYPE IF NOT EXISTS job_status AS ENUM ('pending', 'running', 'done', 'failed')")
 
-    op.create_table(
-        "collections",
-        sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("name", sa.String(255), nullable=False),
-        sa.Column("description", sa.Text),
-        sa.Column("created_at", sa.DateTime, nullable=False, server_default=sa.func.now()),
-    )
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS collections (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            description TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+    """)
 
-    op.create_table(
-        "predictions",
-        sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("collection_id", sa.Integer, sa.ForeignKey("collections.id"), nullable=False),
-        sa.Column("text", sa.Text, nullable=False),
-        sa.Column("status", sa.Enum("unresolved", "came_true", "came_false", name="verdict_status", create_type=False), nullable=False, server_default="unresolved"),
-        sa.Column("summary", sa.Text),
-        sa.Column("next_check_at", sa.DateTime),
-        sa.Column("created_at", sa.DateTime, nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime, nullable=False, server_default=sa.func.now()),
-    )
-    op.create_index("ix_predictions_status_next_check_at", "predictions", ["status", "next_check_at"])
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS predictions (
+            id SERIAL PRIMARY KEY,
+            collection_id INTEGER NOT NULL REFERENCES collections(id),
+            text TEXT NOT NULL,
+            status verdict_status NOT NULL DEFAULT 'unresolved',
+            summary TEXT,
+            next_check_at TIMESTAMP,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+    """)
+    op.execute("CREATE INDEX IF NOT EXISTS ix_predictions_status_next_check_at ON predictions (status, next_check_at)")
 
-    op.create_table(
-        "investigations",
-        sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("prediction_id", sa.Integer, sa.ForeignKey("predictions.id"), nullable=False),
-        sa.Column("verdict", sa.Enum("unresolved", "came_true", "came_false", name="verdict_status", create_type=False), nullable=False),
-        sa.Column("summary", sa.Text),
-        sa.Column("investigated_at", sa.DateTime, nullable=False, server_default=sa.func.now()),
-    )
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS investigations (
+            id SERIAL PRIMARY KEY,
+            prediction_id INTEGER NOT NULL REFERENCES predictions(id),
+            verdict verdict_status NOT NULL,
+            summary TEXT,
+            investigated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+    """)
 
-    op.create_table(
-        "sources",
-        sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("investigation_id", sa.Integer, sa.ForeignKey("investigations.id"), nullable=False),
-        sa.Column("url", sa.Text, nullable=False),
-        sa.Column("title", sa.String(500)),
-        sa.Column("relevance_summary", sa.Text),
-        sa.Column("created_at", sa.DateTime, nullable=False, server_default=sa.func.now()),
-    )
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS sources (
+            id SERIAL PRIMARY KEY,
+            investigation_id INTEGER NOT NULL REFERENCES investigations(id),
+            url TEXT NOT NULL,
+            title VARCHAR(500),
+            relevance_summary TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+    """)
 
-    op.create_table(
-        "jobs",
-        sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("prediction_id", sa.Integer, sa.ForeignKey("predictions.id"), nullable=False),
-        sa.Column("status", sa.Enum("pending", "running", "done", "failed", name="job_status", create_type=False), nullable=False, server_default="pending"),
-        sa.Column("created_at", sa.DateTime, nullable=False, server_default=sa.func.now()),
-        sa.Column("started_at", sa.DateTime),
-        sa.Column("completed_at", sa.DateTime),
-        sa.Column("error_message", sa.Text),
-    )
-    op.create_index("ix_jobs_status", "jobs", ["status"])
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS jobs (
+            id SERIAL PRIMARY KEY,
+            prediction_id INTEGER NOT NULL REFERENCES predictions(id),
+            status job_status NOT NULL DEFAULT 'pending',
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            started_at TIMESTAMP,
+            completed_at TIMESTAMP,
+            error_message TEXT
+        )
+    """)
+    op.execute("CREATE INDEX IF NOT EXISTS ix_jobs_status ON jobs (status)")
 
 
 def downgrade():

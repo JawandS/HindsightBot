@@ -6,3 +6,4 @@ tailwindcss
 web/static/styles.css
 *.egg-info/
 .pytest_cache/
+analysis/
