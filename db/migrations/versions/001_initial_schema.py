@@ -19,8 +19,18 @@ job_status = ENUM("pending", "running", "done", "failed", name="job_status", cre
 
 
 def upgrade():
-    op.execute("CREATE TYPE IF NOT EXISTS verdict_status AS ENUM ('unresolved', 'came_true', 'came_false')")
-    op.execute("CREATE TYPE IF NOT EXISTS job_status AS ENUM ('pending', 'running', 'done', 'failed')")
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE verdict_status AS ENUM ('unresolved', 'came_true', 'came_false');
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE job_status AS ENUM ('pending', 'running', 'done', 'failed');
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$
+    """)
 
     op.execute("""
         CREATE TABLE IF NOT EXISTS collections (
