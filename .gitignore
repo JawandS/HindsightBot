@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+tailwindcss
+web/static/styles.css
+*.egg-info/
+.pytest_cache/

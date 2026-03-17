@@ -1,0 +1,54 @@
+<div class="border-t border-gray-100 px-5 py-4 bg-gray-50 space-y-4 text-sm">
+
+    {% if prediction.summary %}
+    <p class="text-gray-700 leading-relaxed">{{ prediction.summary }}</p>
+    {% endif %}
+
+    {% if prediction.investigations %}
+    {% set latest = prediction.investigations[0] %}
+
+    {% if latest.sources %}
+    <div>
+        <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Sources</h4>
+        <ul class="space-y-2.5">
+            {% for source in latest.sources %}
+            <li>
+                <a href="{{ source.url }}" target="_blank" rel="noopener noreferrer"
+                   class="text-blue-600 hover:underline font-medium">{{ source.title or source.url }}</a>
+                <p class="text-gray-500 text-xs mt-0.5">{{ source.relevance_summary }}</p>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if prediction.investigations | length > 0 %}
+    <div>
+        <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">History</h4>
+        <ul class="space-y-1">
+            {% for inv in prediction.investigations %}
+            <li class="flex items-center gap-2 text-xs text-gray-500">
+                <span class="font-semibold
+                    {% if inv.verdict.value == 'came_true' %}text-green-600
+                    {% elif inv.verdict.value == 'came_false' %}text-red-600
+                    {% else %}text-yellow-600{% endif %}">
+                    {% if inv.verdict.value == 'came_true' %}Came True
+                    {% elif inv.verdict.value == 'came_false' %}Came False
+                    {% else %}Unresolved{% endif %}
+                </span>
+                <span class="text-gray-300">·</span>
+                <span>{{ inv.investigated_at.strftime('%b %d, %Y') }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    {% if prediction.status.value == 'unresolved' and prediction.next_check_at %}
+    <p class="text-xs text-gray-400">Next check: ~{{ prediction.next_check_at.strftime('%b %d, %Y') }}</p>
+    {% elif prediction.status.value == 'unresolved' and not prediction.next_check_at %}
+    <p class="text-xs text-gray-400">Not yet investigated.</p>
+    {% endif %}
+
+</div>

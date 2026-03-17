@@ -1,0 +1,23 @@
+[build]
+builder = "nixpacks"
+
+[[services]]
+name = "web"
+
+[services.build]
+buildCommand = "uv sync && bash scripts/download_tailwind.sh && ./tailwindcss -i web/input.css -o web/static/styles.css --minify"
+releaseCommand = "uv run alembic upgrade head"
+
+[services.deploy]
+startCommand = "uvicorn web.main:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+
+[[services]]
+name = "worker"
+
+[services.build]
+buildCommand = "uv sync"
+
+[services.deploy]
+startCommand = "python worker/main.py"
