@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-POLL_INTERVAL = int(os.environ.get("WORKER_POLL_INTERVAL_SECONDS", "300"))
+POLL_INTERVAL = int(os.environ.get("WORKER_POLL_INTERVAL_SECONDS", "43200"))
 STUCK_THRESHOLD_MINUTES = 30
 
 

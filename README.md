@@ -52,7 +52,7 @@ uv run python -m agents.worker
 | `OPENAI_API_KEY` | OpenAI API key | required |
 | `ADMIN_USERNAME` | HTTP Basic Auth username for `/admin` | required |
 | `ADMIN_PASSWORD` | HTTP Basic Auth password for `/admin` | required |
-| `WORKER_POLL_INTERVAL_SECONDS` | How often the worker polls for jobs | `300` |
+| `WORKER_POLL_INTERVAL_SECONDS` | How often the worker polls for jobs | `43200` (12h) |
 
 ## Deployment (Railway)
 
