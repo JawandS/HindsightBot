@@ -48,7 +48,7 @@ def _promote_due_predictions(db: Session) -> None:
     already_queued = (
         db.query(Job.prediction_id)
         .filter(Job.status.in_([JobStatus.PENDING, JobStatus.RUNNING]))
-        .subquery()
+        .scalar_subquery()
     )
     due = (
         db.query(Prediction)
@@ -241,7 +241,7 @@ def admin_investigate_all(request: Request, db: Session = Depends(get_db), _: st
     already_queued = (
         db.query(Job.prediction_id)
         .filter(Job.status.in_([JobStatus.PENDING, JobStatus.RUNNING]))
-        .subquery()
+        .scalar_subquery()
     )
     due = (
         db.query(Prediction)
