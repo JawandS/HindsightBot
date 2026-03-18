@@ -223,9 +223,24 @@
             color: var(--text-primary);
         }
         .data-table tr:last-child td { border-bottom: none; }
-        .data-table tbody tr:hover td {
-            background: var(--bg-hover);
+        .data-table tbody tr { cursor: pointer; }
+        .data-table tbody td:first-child {
+            border-left: 2px solid transparent;
+            transition: border-color 0.15s ease;
         }
+        .data-table tbody td:last-child::after {
+            content: '›';
+            color: var(--text-muted);
+            margin-left: 0.5rem;
+        }
+        .data-table tbody tr:hover td {
+            background: var(--bg-elevated);
+            color: var(--accent);
+        }
+        .data-table tbody tr:hover td.muted { color: var(--accent-dim); }
+        .data-table tbody tr:hover td.id-col { color: var(--accent-dim); }
+        .data-table tbody tr:hover td:first-child { border-left-color: var(--accent); }
+        .data-table tbody tr:hover td:last-child::after { color: var(--accent); }
         .data-table td.muted { color: var(--text-secondary); }
         .data-table td.id-col {
             color: var(--text-muted);
