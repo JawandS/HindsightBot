@@ -42,7 +42,7 @@ class Prediction(Base):
     id = Column(Integer, primary_key=True)
     collection_id = Column(Integer, ForeignKey("collections.id"), nullable=False)
     text = Column(Text, nullable=False)
-    status = Column(SAEnum(VerdictStatus, name="verdict_status"), default=VerdictStatus.UNRESOLVED, nullable=False)
+    status = Column(SAEnum(VerdictStatus, name="verdict_status", values_callable=lambda obj: [e.value for e in obj]), default=VerdictStatus.UNRESOLVED, nullable=False)
     summary = Column(Text)
     next_check_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -61,7 +61,7 @@ class Investigation(Base):
 
     id = Column(Integer, primary_key=True)
     prediction_id = Column(Integer, ForeignKey("predictions.id"), nullable=False)
-    verdict = Column(SAEnum(VerdictStatus, name="verdict_status"), nullable=False)
+    verdict = Column(SAEnum(VerdictStatus, name="verdict_status", values_callable=lambda obj: [e.value for e in obj]), nullable=False)
     summary = Column(Text)
     investigated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
@@ -90,7 +90,7 @@ class Job(Base):
 
     id = Column(Integer, primary_key=True)
     prediction_id = Column(Integer, ForeignKey("predictions.id"), nullable=False)
-    status = Column(SAEnum(JobStatus, name="job_status"), default=JobStatus.PENDING, nullable=False)
+    status = Column(SAEnum(JobStatus, name="job_status", values_callable=lambda obj: [e.value for e in obj]), default=JobStatus.PENDING, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     started_at = Column(DateTime)
     completed_at = Column(DateTime)
