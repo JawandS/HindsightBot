@@ -20,20 +20,26 @@
             <p class="text-sm text-gray-500 mt-0.5">{{ collection.description }}</p>
             {% endif %}
 
-            <div class="flex gap-4 mt-3 text-xs text-gray-500">
-                {% set total = collection.predictions | length %}
-                {% set true_count = collection.predictions | selectattr("status.value", "equalto", "came_true") | list | length %}
-                {% set false_count = collection.predictions | selectattr("status.value", "equalto", "came_false") | list | length %}
-                {% set unresolved_count = total - true_count - false_count %}
-                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-400 inline-block"></span>{{ true_count }} true</span>
-                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-400 inline-block"></span>{{ false_count }} false</span>
-                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-yellow-400 inline-block"></span>{{ unresolved_count }} unresolved</span>
+            {% set total = collection.predictions | length %}
+            {% set true_count = collection.predictions | selectattr("status.value", "equalto", "came_true") | list | length %}
+            {% set false_count = collection.predictions | selectattr("status.value", "equalto", "came_false") | list | length %}
+            {% set unresolved_count = total - true_count - false_count %}
+            <div class="flex gap-2 mt-3">
+                <button onclick="setFilter(this, 'came_true')" data-filter="came_true" class="filter-btn flex items-center gap-1.5 px-3 py-1 rounded-full border border-green-300 text-green-700 text-xs font-semibold bg-transparent hover:bg-green-50 transition-colors">
+                    <span class="w-2 h-2 rounded-full bg-green-400 inline-block"></span>{{ true_count }} true
+                </button>
+                <button onclick="setFilter(this, 'came_false')" data-filter="came_false" class="filter-btn flex items-center gap-1.5 px-3 py-1 rounded-full border border-red-300 text-red-700 text-xs font-semibold bg-transparent hover:bg-red-50 transition-colors">
+                    <span class="w-2 h-2 rounded-full bg-red-400 inline-block"></span>{{ false_count }} false
+                </button>
+                <button onclick="setFilter(this, 'unresolved')" data-filter="unresolved" class="filter-btn flex items-center gap-1.5 px-3 py-1 rounded-full border border-yellow-300 text-yellow-700 text-xs font-semibold bg-transparent hover:bg-yellow-50 transition-colors">
+                    <span class="w-2 h-2 rounded-full bg-yellow-400 inline-block"></span>{{ unresolved_count }} unresolved
+                </button>
             </div>
         </div>
 
-        <div class="space-y-2">
+        <div class="space-y-2" data-collection-list>
             {% for pred in collection.predictions %}
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden transition-shadow hover:shadow-md cursor-pointer" onclick="toggleDetail(this, {{ pred.id }})">
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden transition-shadow hover:shadow-md cursor-pointer" data-status="{{ pred.status.value }}" onclick="toggleDetail(this, {{ pred.id }})">
                 <div class="px-5 py-4">
                     <p class="text-sm font-medium text-gray-800 leading-snug">{{ pred.text }}</p>
                 </div>
@@ -79,6 +85,44 @@ function toggleDetail(el, predId) {
     } else {
         htmx.ajax('GET', '/predictions/' + predId + '/detail', {target: '#detail-' + predId, swap: 'innerHTML'});
         label.textContent = 'show less \u25b4';
+    }
+}
+
+const FILTER_FILL = {
+    came_true:  ['bg-white', 'border-green-300'],
+    came_false: ['bg-white', 'border-red-300'],
+    unresolved: ['bg-white', 'border-yellow-300'],
+};
+const FILTER_TEXT = {
+    came_true:  'text-green-700',
+    came_false: 'text-red-700',
+    unresolved: 'text-yellow-700',
+};
+
+function setFilter(btn, status) {
+    const section = btn.closest('section');
+    const list = section.querySelector('[data-collection-list]');
+    const buttons = section.querySelectorAll('.filter-btn');
+
+    const isActive = btn.dataset.active === 'true';
+
+    // Reset all buttons
+    buttons.forEach(b => {
+        b.dataset.active = 'false';
+        const f = b.dataset.filter;
+        FILTER_FILL[f].forEach(cls => b.classList.remove(cls));
+        b.classList.add(FILTER_TEXT[f]);
+        b.style.opacity = '';
+    });
+
+    const cards = list.querySelectorAll('[data-status]');
+    if (isActive) {
+        cards.forEach(c => c.style.display = '');
+    } else {
+        btn.dataset.active = 'true';
+        FILTER_FILL[status].forEach(cls => btn.classList.add(cls));
+        buttons.forEach(b => { if (b !== btn) b.style.opacity = '0.4'; });
+        cards.forEach(c => { c.style.display = c.dataset.status === status ? '' : 'none'; });
     }
 }
 </script>
