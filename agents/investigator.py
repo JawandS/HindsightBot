@@ -48,12 +48,16 @@ def investigate(prediction_text: str, collection_name: str) -> InvestigationResu
 
 def _search_web(prediction_text: str, collection_name: str) -> str:
     """Step 1: Use OpenAI Responses API + web_search_preview to gather evidence."""
+    from datetime import date
+    today = date.today().strftime("%B %d, %Y")
     prompt = (
         f"You are fact-checking a prediction from '{collection_name}'.\n\n"
+        f"TODAY'S DATE: {today}\n\n"
         f"PREDICTION: <<< {prediction_text} >>>\n\n"
-        "Search the web to find current evidence for or against this prediction. "
+        "Search the web for the most recent evidence about this prediction. "
+        "Prioritize sources from 2026 — only fall back to 2025 sources if no newer information exists. "
         "Gather information from 3-5 reliable sources. "
-        "Report what you find, including source URLs and titles."
+        "Report what you find, including source URLs, titles, and publication dates."
     )
 
     response = _get_client().responses.create(
@@ -73,11 +77,19 @@ def _search_web(prediction_text: str, collection_name: str) -> str:
 
 def _extract_structured(prediction_text: str, research_text: str) -> dict:
     """Step 2: Use Chat Completions + JSON mode to extract structured verdict from research text."""
+    from datetime import date
+    today = date.today().strftime("%B %d, %Y")
     system = (
-        "You extract structured fact-check results from research text. "
+        f"You extract structured fact-check results from research text. Today's date is {today}.\n\n"
+        "VERDICT RULES — read carefully:\n"
+        '- Use "came_true" ONLY if the prediction has definitively happened as of today\'s date, confirmed by facts.\n'
+        '- Use "came_false" ONLY if the prediction has definitively failed or been disproven as of today\'s date.\n'
+        '- Use "unresolved" if the evidence is based on projections, trends, or expectations about the future — '
+        "even if it looks very likely. A prediction is only resolved when the outcome is already known for certain.\n"
+        "  Example: if data shows something is 'on track' or 'projected' to happen, that is UNRESOLVED.\n\n"
         "Return valid JSON with exactly these fields:\n"
         '- "verdict": one of "came_true", "came_false", "unresolved"\n'
-        '- "summary": 1-2 sentence explanation of your verdict\n'
+        '- "summary": 1-2 sentence explanation citing specific facts and dates (not projections)\n'
         '- "sources": array of up to 5 objects, each with "url", "title", "relevance_summary" (1-2 sentences)\n\n'
         "Only return JSON, no other text."
     )
