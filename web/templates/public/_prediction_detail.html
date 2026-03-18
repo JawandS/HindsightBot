@@ -26,6 +26,13 @@
     <div>
         <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">History</h4>
         <ul class="space-y-1">
+            {% if prediction.status.value == 'unresolved' and prediction.next_check_at %}
+            <li class="flex items-center gap-2 text-xs">
+                <span class="font-bold text-gray-700">Next check</span>
+                <span class="text-gray-300">·</span>
+                <span class="font-bold text-gray-700">~{{ prediction.next_check_at.strftime('%b %d, %Y') }}</span>
+            </li>
+            {% endif %}
             {% for inv in prediction.investigations %}
             <li class="flex items-center gap-2 text-xs text-gray-500">
                 <span class="font-semibold
@@ -45,9 +52,7 @@
     {% endif %}
     {% endif %}
 
-    {% if prediction.status.value == 'unresolved' and prediction.next_check_at %}
-    <p class="text-xs text-gray-400">Next check: ~{{ prediction.next_check_at.strftime('%b %d, %Y') }}</p>
-    {% elif prediction.status.value == 'unresolved' and not prediction.next_check_at %}
+    {% if prediction.status.value == 'unresolved' and not prediction.next_check_at %}
     <p class="text-xs text-gray-400">Not yet investigated.</p>
     {% endif %}
 
