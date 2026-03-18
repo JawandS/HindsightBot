@@ -1,76 +1,157 @@
 {% extends "base.html" %}
 {% block title %}Admin — HindsightBot{% endblock %}
 {% block content %}
-<div style="padding: 1.5rem; font-family: monospace; font-size: 13px; max-width: 1100px;">
-    <h1 style="margin-bottom: 1rem;">HindsightBot Admin</h1>
+<div style="max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem;">
 
-    <details open style="margin-bottom: 1.5rem;">
-        <summary style="cursor:pointer; font-weight:bold; margin-bottom:0.75rem;">New Collection</summary>
-        <form method="post" action="/admin/collections" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.5rem;">
-            <input type="text" name="name" placeholder="Collection name" required style="padding:4px 8px;">
-            <input type="text" name="description" placeholder="Description (optional)" style="padding:4px 8px; width:300px;">
-            <button type="submit">Create</button>
-        </form>
-    </details>
+    <!-- Header -->
+    <header style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:2rem; padding-bottom:1rem; border-bottom: 1px solid var(--border);">
+        <div>
+            <div style="font-family:var(--font-display); font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); margin-bottom:4px;">System Console</div>
+            <h1 style="font-family:var(--font-display); font-size:22px; letter-spacing:0.04em; color:var(--text-primary); font-weight:400;">HindsightBot<span style="color:var(--accent);">_</span></h1>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); letter-spacing:0.05em;">
+            {{ predictions|length }} predictions &nbsp;/&nbsp; {{ collections|length }} collections
+        </div>
+    </header>
 
-    <details open style="margin-bottom: 1.5rem;">
-        <summary style="cursor:pointer; font-weight:bold; margin-bottom:0.75rem;">Seed Predictions</summary>
-        <form hx-post="/admin/seed" hx-target="#seed-result" hx-swap="innerHTML" style="margin-top:0.5rem;">
-            <div style="margin-bottom:0.5rem;">
-                <label>Collection:
-                    <select name="collection_id" style="margin-left:0.25rem;">
-                        {% for col in collections %}
-                        <option value="{{ col.id }}">{{ col.name }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
+    <!-- Top row: New Collection + Seed + Investigate All -->
+    <div style="display:grid; grid-template-columns:1fr 2fr; gap:1rem; margin-bottom:1.5rem;">
+
+        <!-- New Collection -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">New Collection</span>
             </div>
-            <textarea name="predictions_text" rows="8" cols="70" placeholder="One prediction per line..."></textarea>
-            <br>
-            <button type="submit" style="margin-top:0.5rem;">Seed</button>
-            <span id="seed-result" style="margin-left:0.5rem;"></span>
-        </form>
-    </details>
+            <div class="card-body">
+                <form method="post" action="/admin/collections" style="display:flex; flex-direction:column; gap:0.5rem;">
+                    <div>
+                        <label style="display:block; margin-bottom:4px;">Name</label>
+                        <input type="text" name="name" placeholder="e.g. AI Predictions 2026" required>
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px;">Description</label>
+                        <input type="text" name="description" placeholder="Optional">
+                    </div>
+                    <div style="padding-top:4px;">
+                        <button type="submit" class="btn btn-primary">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-    <div style="margin-bottom:1rem;">
-        <button hx-post="/admin/investigate-all" hx-target="#bulk-result" hx-swap="innerHTML">
-            Investigate All Unresolved
-        </button>
-        <span id="bulk-result" style="margin-left:0.5rem;"></span>
+        <!-- Seed Predictions -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Seed Predictions</span>
+                <span style="font-size:11px; color:var(--text-muted);">one per line · duplicates skipped</span>
+            </div>
+            <div class="card-body">
+                <form hx-post="/admin/seed" hx-target="#seed-result" hx-swap="innerHTML" style="display:flex; flex-direction:column; gap:0.5rem;">
+                    <div style="display:flex; gap:0.75rem; align-items:flex-end;">
+                        <div style="flex:0 0 200px;">
+                            <label style="display:block; margin-bottom:4px;">Collection</label>
+                            <select name="collection_id">
+                                {% for col in collections %}
+                                <option value="{{ col.id }}">{{ col.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div style="flex:1;">
+                            <label style="display:block; margin-bottom:4px;">Predictions</label>
+                            <textarea name="predictions_text" rows="5" placeholder="Paste predictions here, one per line..."></textarea>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:1rem; padding-top:4px;">
+                        <button type="submit" class="btn btn-primary">Seed</button>
+                        <span id="seed-result" class="notify" style="display:none;"></span>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
-    <table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse; width:100%;">
-        <thead style="background:#f3f4f6;">
-            <tr>
-                <th>ID</th>
-                <th>Collection</th>
-                <th style="max-width:350px;">Prediction</th>
-                <th>Status</th>
-                <th>Next Check</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for pred in predictions %}
-            <tr>
-                <td>{{ pred.id }}</td>
-                <td>{{ pred.collection.name }}</td>
-                <td style="max-width:350px; word-wrap:break-word;">{{ pred.text[:100] }}{% if pred.text|length > 100 %}…{% endif %}</td>
-                <td>{{ pred.status.value }}</td>
-                <td>{{ pred.next_check_at.strftime('%Y-%m-%d') if pred.next_check_at else '—' }}</td>
-                <td>
-                    <span id="btn-{{ pred.id }}">
-                        <button
-                            hx-post="/admin/predictions/{{ pred.id }}/investigate"
-                            hx-target="#btn-{{ pred.id }}"
-                            hx-swap="innerHTML">
-                            Investigate Now
-                        </button>
-                    </span>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Bulk Actions Bar -->
+    <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-body" style="padding:10px 16px; display:flex; align-items:center; gap:1rem;">
+            <span style="font-size:11px; color:var(--text-secondary); letter-spacing:0.05em; text-transform:uppercase; margin-right:0.5rem;">Bulk Actions</span>
+            <button class="btn" hx-post="/admin/investigate-all" hx-target="#bulk-result" hx-swap="innerHTML">
+                ▶ Investigate All Unresolved
+            </button>
+            <span id="bulk-result" class="notify" style="display:none;"></span>
+        </div>
+    </div>
+
+    <!-- Predictions Table -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Predictions</span>
+        </div>
+        <div style="overflow-x:auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width:48px;">#</th>
+                        <th style="width:160px;">Collection</th>
+                        <th>Prediction</th>
+                        <th style="width:110px;">Status</th>
+                        <th style="width:110px;">Next Check</th>
+                        <th style="width:120px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pred in predictions %}
+                    <tr>
+                        <td class="id-col">{{ pred.id }}</td>
+                        <td class="muted">{{ pred.collection.name }}</td>
+                        <td style="max-width:480px;">
+                            <span title="{{ pred.text }}" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-primary);">
+                                {{ pred.text[:120] }}{% if pred.text|length > 120 %}…{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            {% if pred.status.value == 'unresolved' %}
+                                <span class="badge badge-unresolved">unresolved</span>
+                            {% elif pred.status.value == 'came_true' %}
+                                <span class="badge badge-true">came true</span>
+                            {% else %}
+                                <span class="badge badge-false">came false</span>
+                            {% endif %}
+                        </td>
+                        <td class="muted" style="font-size:11px;">
+                            {{ pred.next_check_at.strftime('%Y-%m-%d') if pred.next_check_at else '—' }}
+                        </td>
+                        <td>
+                            <span id="btn-{{ pred.id }}">
+                                <button
+                                    class="btn btn-sm"
+                                    hx-post="/admin/predictions/{{ pred.id }}/investigate"
+                                    hx-target="#btn-{{ pred.id }}"
+                                    hx-swap="innerHTML">
+                                    Run
+                                </button>
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not predictions %}
+                    <tr>
+                        <td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">No predictions yet — seed some above.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
+
+<script>
+// Show notify spans after HTMX swaps their content
+document.body.addEventListener('htmx:afterSwap', function(e) {
+    const el = e.detail.target;
+    if (el && el.textContent.trim()) {
+        el.style.display = 'inline-flex';
+    }
+});
+</script>
 {% endblock %}
