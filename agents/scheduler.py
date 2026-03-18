@@ -63,7 +63,7 @@ def _call_llm(prediction_text: str, investigation_summary: str) -> str:
         "When should we check again?"
     )
     response = _get_client().chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4.1",
         response_format={"type": "json_object"},
         messages=[
             {"role": "system", "content": system},

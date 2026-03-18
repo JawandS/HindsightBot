@@ -57,7 +57,7 @@ def _search_web(prediction_text: str, collection_name: str) -> str:
     )
 
     response = _get_client().responses.create(
-        model="gpt-4o",
+        model="gpt-4.1",
         tools=[{"type": "web_search_preview"}],
         input=[{"role": "user", "content": prompt}],
     )
@@ -88,7 +88,7 @@ def _extract_structured(prediction_text: str, research_text: str) -> dict:
     )
 
     response = _get_client().chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4.1",
         response_format={"type": "json_object"},
         messages=[
             {"role": "system", "content": system},
