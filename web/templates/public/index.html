@@ -41,7 +41,10 @@
                     hx-swap="innerHTML"
                     hx-trigger="click"
                 >
-                    <p class="text-sm font-medium text-gray-800 leading-snug flex-1">{{ pred.text }}</p>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-800 leading-snug">{{ pred.text }}</p>
+                        <span class="text-xs text-gray-400 mt-0" style="display:inline-block;margin-top:4px;">show more ▾</span>
+                    </div>
                     <span class="shrink-0 mt-0.5 text-xs font-semibold px-2.5 py-1 rounded-full
                         {% if pred.status.value == 'came_true' %}bg-green-100 text-green-700
                         {% elif pred.status.value == 'came_false' %}bg-red-100 text-red-700
@@ -58,5 +61,15 @@
     </section>
     {% endfor %}
 </main>
+
+<div style="position:fixed;bottom:1rem;right:1rem;max-width:350px;background:#fff;border:1px solid #e5e7eb;border-radius:0.75rem;padding:0.75rem 1rem;box-shadow:0 4px 6px -1px rgba(0,0,0,0.08);z-index:100;">
+    <p class="text-xs text-gray-500 leading-relaxed">
+        Predictions sourced from the
+        <a href="https://aidailybrief.ai/" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline">AI Daily Brief</a>
+        (<a href="https://www.youtube.com/watch?v=p97xD1fBLXo" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline">ep.1</a>,
+        <a href="https://www.youtube.com/watch?v=wi7F3veEEvU" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline">ep.2</a>).
+        Predicition extraction + analysis use LLMs and may not be accurate. This site is not affiliated with the AI Daily Brief.
+    </p>
+</div>
 
 {% endblock %}
