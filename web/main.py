@@ -169,9 +169,16 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 # ── Public routes ─────────────────────────────────────────────────────────────
 
+_STATUS_ORDER = {"came_true": 0, "came_false": 1, "unresolved": 2}
+
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request, db: Session = Depends(get_db)):
     collections = db.query(Collection).order_by(Collection.created_at).all()
+    for collection in collections:
+        collection.predictions.sort(
+            key=lambda p: (_STATUS_ORDER[p.status.value], -p.updated_at.timestamp())
+        )
     return templates.TemplateResponse("public/index.html", {"request": request, "collections": collections})
 
 
