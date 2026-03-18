@@ -167,6 +167,20 @@ app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), na
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 
+def _ordinal(n: int) -> str:
+    suffix = "th" if 11 <= (n % 100) <= 13 else ["th", "st", "nd", "rd", "th"][min(n % 10, 4)]
+    return f"{n}{suffix}"
+
+
+def _dateformat(dt: datetime | None) -> str:
+    if dt is None:
+        return ""
+    return f"{dt.strftime('%B')} {_ordinal(dt.day)}"
+
+
+templates.env.filters["dateformat"] = _dateformat
+
+
 # ── Public routes ─────────────────────────────────────────────────────────────
 
 _STATUS_ORDER = {"came_true": 0, "came_false": 1, "unresolved": 2}
